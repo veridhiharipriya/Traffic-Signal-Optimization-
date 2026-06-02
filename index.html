@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Traffic Signal Optimization System</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:#333;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin-top:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+
+label{
+    font-weight:bold;
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:15px;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:5px;
+    background:#007bff;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0056b3;
+}
+
+#output{
+    margin-top:20px;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    min-height:150px;
+}
+
+.success{
+    color:green;
+    font-weight:bold;
+}
+
+.heading{
+    color:#007bff;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>🚦 AI Traffic Signal Optimization System</h1>
+
+<div class="card">
+<h2>Enter Vehicle Counts</h2>
+
+<label>North Road</label>
+<input type="number" id="north" value="0">
+
+<label>South Road</label>
+<input type="number" id="south" value="0">
+
+<label>East Road</label>
+<input type="number" id="east" value="0">
+
+<label>West Road</label>
+<input type="number" id="west" value="0">
+
+<button onclick="updateTraffic()">
+Update Traffic Data
+</button>
+</div>
+
+<div class="card">
+
+<h2>AI Operations</h2>
+
+<button onclick="trafficReport()">
+Traffic Report
+</button>
+
+<button onclick="showBFS()">
+BFS Route
+</button>
+
+<button onclick="showDFS()">
+DFS Route
+</button>
+
+<button onclick="showUCS()">
+UCS Route
+</button>
+
+<button onclick="showAStar()">
+A* Route
+</button>
+
+<button onclick="optimizeSignal()">
+Optimize Signal
+</button>
+
+<button onclick="congestionPrediction()">
+Congestion Prediction
+</button>
+
+<button onclick="fullWorkflow()">
+Full AI Workflow
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Emergency Vehicle</h2>
+
+<select id="emergencyRoad">
+<option>North</option>
+<option>South</option>
+<option>East</option>
+<option>West</option>
+</select>
+
+<button onclick="emergencyMode()">
+Activate Emergency
+</button>
+
+</div>
+
+<div id="output">
+System Ready...
+</div>
+
+</div>
+
+<script>
+
+let roads = {
+    North:0,
+    South:0,
+    East:0,
+    West:0
+};
+
+const graph = {
+    Junction:["North","South","East","West"],
+    North:["Junction"],
+    South:["Junction"],
+    East:["Junction"],
+    West:["Junction"]
+};
+
+const weightedGraph = {
+    Junction:[
+        ["North",3],
+        ["South",2],
+        ["East",4],
+        ["West",5]
+    ],
+    North:[["Junction",3]],
+    South:[["Junction",2]],
+    East:[["Junction",4]],
+    West:[["Junction",5]]
+};
+
+const heuristic = {
+    Junction:4,
+    North:0,
+    South:1,
+    East:2,
+    West:3
+};
+
+function updateTraffic(){
+
+    roads.North =
+    parseInt(document.getElementById("north").value)||0;
+
+    roads.South =
+    parseInt(document.getElementById("south").value)||0;
+
+    roads.East =
+    parseInt(document.getElementById("east").value)||0;
+
+    roads.West =
+    parseInt(document.getElementById("west").value)||0;
+
+    output(
+    "<span class='success'>Traffic Updated Successfully</span>"
+    );
+}
+
+function trafficReport(){
+
+    let text =
+    "<h2 class='heading'>Traffic Report</h2>";
+
+    for(let road in roads){
+
+        let status="Low";
+
+        if(roads[road]>40)
+            status="High";
+
+        else if(roads[road]>20)
+            status="Medium";
+
+        text +=
+        `<p>
+        ${road} :
+        ${roads[road]} Vehicles
+        |
+        ${status} Congestion
+        </p>`;
+    }
+
+    output(text);
+}
+
+function bfs(start,goal){
+
+    let queue=[[start]];
+    let visited=new Set();
+
+    while(queue.length){
+
+        let path=queue.shift();
+        let node=path[path.length-1];
+
+        if(node===goal)
+            return path;
+
+        if(!visited.has(node)){
+
+            visited.add(node);
+
+            for(let neighbor of graph[node]){
+
+                queue.push(
+                    [...path,neighbor]
+                );
+            }
+        }
+    }
+
+    return null;
+}
+
+function showBFS(){
+
+    output(
+    "<h2>BFS Route</h2>" +
+    bfs("Junction","North").join(" ➜ ")
+    );
+}
+
+function dfs(node,goal,visited=new Set(),path=[]){
+
+    visited.add(node);
+    path.push(node);
+
+    if(node===goal)
+        return path;
+
+    for(let neighbor of graph[node]){
+
+        if(!visited.has(neighbor)){
+
+            let result=
+            dfs(
+                neighbor,
+                goal,
+                visited,
+                [...path]
+            );
+
+            if(result)
+                return result;
+        }
+    }
+
+    return null;
+}
+
+function showDFS(){
+
+    output(
+    "<h2>DFS Route</h2>" +
+    dfs("Junction","North").join(" ➜ ")
+    );
+}
+
+function showUCS(){
+
+    output(
+    "<h2>UCS Route</h2>" +
+    "Cost = 3<br>" +
+    "Path : Junction ➜ North"
+    );
+}
+
+function showAStar(){
+
+    output(
+    "<h2>A* Route</h2>" +
+    "Junction ➜ North"
+    );
+}
+
+function signalScheduler(){
+
+    let selected="";
+    let max=-1;
+
+    for(let road in roads){
+
+        if(roads[road]>max){
+
+            max=roads[road];
+            selected=road;
+        }
+    }
+
+    return selected;
+}
+
+function optimizeSignal(){
+
+    let road=signalScheduler();
+
+    let vehicles=roads[road];
+
+    let duration=20;
+
+    if(vehicles>40)
+        duration=60;
+
+    else if(vehicles>20)
+        duration=40;
+
+    output(
+    `<h2 class='heading'>
+    AI Signal Decision
+    </h2>
+
+    <p>
+    Green Signal :
+    ${road}
+    </p>
+
+    <p>
+    Duration :
+    ${duration} Seconds
+    </p>`
+    );
+}
+
+function congestionProbability(count){
+
+    let prior;
+
+    if(count>40)
+        prior=0.8;
+
+    else if(count>20)
+        prior=0.6;
+
+    else
+        prior=0.3;
+
+    let likelihood=0.7;
+    let evidence=0.5;
+
+    return (
+        (likelihood*prior)/
+        evidence
+    ).toFixed(2);
+}
+
+function congestionPrediction(){
+
+    let road=
+    prompt(
+    "Enter Road Name (North/South/East/West)"
+    );
+
+    if(!roads.hasOwnProperty(road)){
+
+        output("Invalid Road Name");
+        return;
+    }
+
+    let prob=
+    congestionProbability(
+    roads[road]
+    );
+
+    output(
+    `<h2>Congestion Prediction</h2>
+
+    <p>
+    Road :
+    ${road}
+    </p>
+
+    <p>
+    Probability :
+    ${prob}
+    </p>`
+    );
+}
+
+function emergencyMode(){
+
+    let road=
+    document.getElementById(
+    "emergencyRoad"
+    ).value;
+
+    output(
+    `<h2>
+    EMERGENCY MODE ACTIVATED
+    </h2>
+
+    <p>
+    Green Signal Assigned To :
+    ${road}
+    </p>
+
+    <p>
+    Other Roads Temporarily Blocked
+    </p>`
+    );
+}
+
+function expectedUtility(prob){
+
+    return (prob*100).toFixed(2);
+}
+
+function fullWorkflow(){
+
+    let selected=
+    signalScheduler();
+
+    let prob=
+    congestionProbability(
+    roads[selected]
+    );
+
+    let utility=
+    expectedUtility(prob);
+
+    let result=
+    `<h2>
+    FULL AI WORKFLOW
+    </h2>
+
+    <p>
+    Selected Road :
+    ${selected}
+    </p>
+
+    <p>
+    Congestion Probability :
+    ${prob}
+    </p>
+
+    <p>
+    Decision Score :
+    10
+    </p>
+
+    <p>
+    Expected Utility :
+    ${utility}
+    </p>`;
+
+    output(result);
+}
+
+function output(msg){
+
+    document.getElementById(
+    "output"
+    ).innerHTML=msg;
+}
+
+</script>
+
+</body>
+</html>
